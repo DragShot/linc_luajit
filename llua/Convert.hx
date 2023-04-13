@@ -1,11 +1,11 @@
 package llua;
 
-
 import llua.State;
 import llua.Lua;
 import llua.LuaL;
 import llua.Macro.*;
 import haxe.DynamicAccess;
+
 class Convert {
 
 	/**
@@ -26,15 +26,28 @@ class Convert {
 				Lua.pushstring(l, cast(val, String));
 			case Type.ValueType.TClass(Array):
 				arrayToLua(l, val);
+			case Type.ValueType.TClass(haxe.ds.StringMap) | Type.ValueType.TClass(haxe.ds.ObjectMap):
+				mapToLua(l, val);
 			case Type.ValueType.TObject:
 				objectToLua(l, val); // {}
 			default:
-				trace("haxe value not supported\n"+val+" - "+Type.typeof(val) );
+				trace("haxe value not supported\nvalue: "+val+" - type: "+Type.typeof(val) );
 				return false;
 		}
 
 		return true;
 
+	}
+
+	static inline function mapToLua(l:State, res:Map<String,Dynamic>) {
+		var tLen = 0;
+		for (n in res) { tLen++; }
+		Lua.createtable(l, tLen, 0);
+		for (index => val in res){
+			Lua.pushstring(l, Std.string(index));
+			toLua(l, val);
+			Lua.settable(l, -3);
+		}
 	}
 
 	public static inline function arrayToLua(l:State, arr:Array<Any>) {
@@ -104,7 +117,7 @@ class Convert {
 			default:
 				ret = null;
 				//trace("return value not supported\n"+v);
-				trace("return value not supported\nvalue: "+v+"\ntype: "+vtype);
+				trace("return value not supported\nvalue: "+v+" - type: "+vtype);
 		}
 
 		return ret;
